@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="pt-BR">
+<title>Vai Viralizar?</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..900&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400&family=Martian+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: uma linha do tempo de edição de vídeo. Cada seção é um trecho marcado por timecode; o simulador é o "monitor". */
+:root {
+  --paper: #eceee9;      /* fundo, cinza levemente esverdeado */
+  --sheet: #f8f9f6;      /* superfícies elevadas */
+  --ink: #15171c;        /* texto */
+  --mute: #5d6168;       /* texto secundário */
+  --line: #c9ccc4;       /* fios e trilhos */
+  --rec: #e8341c;        /* vermelho de "gravando" — único acento */
+  --rec-soft: #f6d2ca;
+  --cold: #3b4a5c;       /* contribuições negativas */
+  --cold-soft: #d3d9e0;
+  --f-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --f-body: "Newsreader", Georgia, "Times New Roman", serif;
+  --f-mono: "Martian Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --s-1: .75rem; --s-2: 1.25rem; --s-3: 2rem; --s-4: 3.5rem; --s-5: 6rem;
+  --radius: 6px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #121418; --sheet: #1b1e23; --ink: #e9ebe6; --mute: #9aa0a8; --line: #33373e;
+  --rec: #ff5a40; --rec-soft: #4a2119; --cold: #9fb4cc; --cold-soft: #26303b; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --paper: #121418; --sheet: #1b1e23; --ink: #e9ebe6; --mute: #9aa0a8; --line: #33373e;
+  --rec: #ff5a40; --rec-soft: #4a2119; --cold: #9fb4cc; --cold-soft: #26303b; color-scheme: dark; }
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink);
+  font: 400 1.125rem/1.6 var(--f-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 1120px; margin: 0 auto; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1; }
+p { margin: 0; max-width: 62ch; }
+.mono, .tc { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.label { font: 600 .7rem/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--mute); }
+a { color: inherit; text-decoration-color: var(--rec); text-underline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--rec); outline-offset: 2px; }
+
+/* ---------- topo ---------- */
+.top { display: flex; justify-content: space-between; align-items: center; gap: var(--s-2); padding-block: var(--s-2); border-bottom: 1px solid var(--line); }
+.rec { display: inline-flex; align-items: center; gap: .5rem; }
+.rec::before { content: ""; width: .6rem; height: .6rem; border-radius: 50%; background: var(--rec); animation: blink 1.6s steps(2, start) infinite; }
+@keyframes blink { to { opacity: .2; } }
+
+.hero { padding-block: var(--s-4) var(--s-3); display: grid; gap: var(--s-2); }
+.hero h1 {
+  font-size: clamp(3.4rem, 13vw, 9.5rem); font-weight: 900; font-stretch: 62%;
+  text-transform: uppercase; letter-spacing: -.01em; line-height: .86;
+}
+.hero h1 em { font-style: normal; color: var(--rec); }
+.hero .lede { font-size: clamp(1.2rem, 2.2vw, 1.5rem); line-height: 1.45; max-width: 40ch; }
+
+/* faixa de timecode que divide as seções */
+.cut { display: flex; align-items: center; gap: var(--s-1); padding-block: var(--s-4) var(--s-2); }
+.cut .tc { font-size: .78rem; color: var(--rec); font-weight: 600; white-space: nowrap; }
+.cut .track { flex: 1; height: 10px; background: repeating-linear-gradient(90deg, var(--line) 0 1px, transparent 1px 12px); border-bottom: 1px solid var(--line); }
+.cut .name { font: 600 .75rem/1 var(--f-mono); text-transform: uppercase; letter-spacing: .08em; white-space: nowrap; }
+.sec-title { font-size: clamp(2rem, 5vw, 3.4rem); font-weight: 800; font-stretch: 75%; text-transform: uppercase; margin-bottom: var(--s-2); }
+.sec-intro { color: var(--mute); margin-bottom: var(--s-3); }
+
+/* ---------- simulador ---------- */
+.sim { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: var(--s-3); align-items: start; }
+.controls { display: grid; gap: var(--s-3); }
+fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: var(--s-2); min-width: 0; }
+legend { font: 800 1.35rem/1 var(--f-display); font-stretch: 75%; text-transform: uppercase; padding: 0 0 var(--s-1); display: flex; gap: .6rem; align-items: baseline; width: 100%; border-bottom: 2px solid var(--ink); }
+legend small { font: 400 .8rem/1 var(--f-body); font-style: italic; text-transform: none; color: var(--mute); }
+.ctl { display: grid; gap: .5rem; }
+.ctl-head { display: flex; justify-content: space-between; gap: 1rem; align-items: baseline; }
+.ctl-head label, .ctl-head span:first-child { font-size: 1rem; }
+.ctl-head output { font: 600 .85rem/1 var(--f-mono); font-variant-numeric: tabular-nums; }
+
+input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 28px; background: transparent; margin: 0; cursor: pointer; }
+input[type=range]::-webkit-slider-runnable-track { height: 4px; background: var(--line); border-radius: 2px; }
+input[type=range]::-moz-range-track { height: 4px; background: var(--line); border-radius: 2px; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 26px; margin-top: -11px; background: var(--ink); border-radius: 2px; border: 3px solid var(--paper); }
+input[type=range]::-moz-range-thumb { width: 10px; height: 22px; background: var(--ink); border-radius: 2px; border: 3px solid var(--paper); }
+
+.chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+.chips input, .toggle input { position: absolute; opacity: 0; pointer-events: none; }
+.chips label { font: 500 .85rem/1 var(--f-mono); padding: .55rem .7rem; border: 1px solid var(--line); border-radius: var(--radius); cursor: pointer; background: var(--sheet); transition: background .15s, color .15s, border-color .15s; }
+.chips input:checked + label { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.chips input:focus-visible + label, .toggle input:focus-visible + label { outline: 2px solid var(--rec); outline-offset: 2px; }
+.toggles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .4rem; }
+.toggle label { display: flex; gap: .6rem; align-items: center; padding: .6rem .7rem; border: 1px solid var(--line); border-radius: var(--radius); cursor: pointer; font-size: .95rem; line-height: 1.2; background: var(--sheet); height: 100%; }
+.toggle label::before { content: ""; flex: none; width: 1.9rem; height: 1.05rem; border-radius: 1rem; background: var(--line); box-shadow: inset 0 0 0 2px var(--line), inset -.9rem 0 0 2px var(--sheet); transition: background .15s; }
+.toggle input:checked + label::before { background: var(--rec); box-shadow: inset 0 0 0 2px var(--rec), inset .9rem 0 0 2px var(--sheet); }
+
+/* monitor (resultado) */
+.monitor { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 1rem); background: var(--ink); color: var(--paper); border-radius: 14px; padding: var(--s-2); display: grid; gap: var(--s-2); }
+.monitor .label { color: color-mix(in srgb, var(--paper) 60%, var(--ink)); }
+.mon-top { display: flex; justify-content: space-between; align-items: center; }
+.pct { font: 900 clamp(4.5rem, 11vw, 7.5rem)/.8 var(--f-display); font-stretch: 62%; font-variant-numeric: tabular-nums; display: flex; align-items: flex-start; }
+.pct sup { font-size: .38em; margin-left: .15em; margin-top: .15em; }
+.verdict { font: 700 1.05rem/1.2 var(--f-display); font-stretch: 85%; text-transform: uppercase; letter-spacing: .02em; }
+.meter { position: relative; height: 14px; border-radius: 3px; background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--paper) 22%, var(--ink)) 0 2px, transparent 2px 6px); overflow: hidden; }
+.meter i { position: absolute; inset: 0 auto 0 0; background: var(--rec); transition: width .35s cubic-bezier(.2,.8,.2,1); }
+.meter b { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--paper); }
+.meter-cap { display: flex; justify-content: space-between; font: .68rem/1 var(--f-mono); color: color-mix(in srgb, var(--paper) 60%, var(--ink)); }
+.why { display: grid; gap: .35rem; }
+.why-row { display: grid; grid-template-columns: minmax(0, 7.5rem) minmax(0, 1fr) 3rem; gap: .5rem; align-items: center; font-size: .82rem; line-height: 1.15; }
+.why-row .bar { position: relative; height: 10px; }
+.why-row .bar::before { content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: color-mix(in srgb, var(--paper) 35%, var(--ink)); }
+.why-row .bar i { position: absolute; top: 0; bottom: 0; transition: all .3s; }
+.why-row .v { font: .72rem/1 var(--f-mono); text-align: right; font-variant-numeric: tabular-nums; }
+.presets { display: flex; flex-wrap: wrap; gap: .4rem; }
+.presets button { font: 500 .78rem/1 var(--f-mono); color: var(--paper); background: transparent; border: 1px solid color-mix(in srgb, var(--paper) 35%, var(--ink)); padding: .5rem .65rem; border-radius: var(--radius); cursor: pointer; }
+.presets button:hover { border-color: var(--paper); }
+.fine { font-size: .82rem; line-height: 1.45; color: color-mix(in srgb, var(--paper) 70%, var(--ink)); }
+
+/* ---------- como aprendeu ---------- */
+.steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 2px solid var(--ink); }
+.step { padding: var(--s-2) var(--s-2) var(--s-2) 0; display: grid; gap: .75rem; align-content: start; }
+.step + .step { padding-left: var(--s-2); border-left: 1px solid var(--line); }
+.step .tc { color: var(--rec); font-size: .75rem; font-weight: 600; }
+.step h3 { font-size: 1.6rem; font-weight: 800; font-stretch: 75%; text-transform: uppercase; }
+.step p { font-size: 1rem; }
+.step .big { font: 900 2.6rem/1 var(--f-display); font-stretch: 62%; font-variant-numeric: tabular-nums; }
+
+.formula { margin-top: var(--s-3); background: var(--sheet); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--s-2); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s-3); align-items: center; }
+.formula code { font: .9rem/1.8 var(--f-mono); display: block; overflow-x: auto; white-space: nowrap; }
+.formula code span { color: var(--rec); }
+
+/* ---------- alavancas ---------- */
+.levers { display: grid; gap: .1rem; }
+.lever { display: grid; grid-template-columns: minmax(0, 17rem) minmax(0, 1fr) 4.5rem; gap: var(--s-2); align-items: center; padding-block: .55rem; border-bottom: 1px solid var(--line); }
+.lever .what { font-size: 1rem; line-height: 1.25; }
+.lever .what small { display: block; font: .72rem/1.3 var(--f-mono); color: var(--mute); margin-top: .2rem; }
+.lever .track { height: 18px; background: var(--cold-soft); border-radius: 2px; position: relative; overflow: hidden; }
+.lever .track i { position: absolute; inset: 0 auto 0 0; background: var(--rec); }
+.lever .num { font: 600 1rem/1 var(--f-mono); text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ---------- acertos ---------- */
+.score { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s-4); align-items: start; }
+.grid100 { display: grid; grid-template-columns: repeat(20, 1fr); gap: 3px; margin-block: var(--s-2) var(--s-1); }
+.grid100 i { aspect-ratio: 1; border-radius: 1px; background: var(--cold-soft); }
+.grid100 i.hit { background: var(--rec); }
+.grid100 i.miss { background: transparent; box-shadow: inset 0 0 0 1.5px var(--rec); }
+.legend { display: flex; flex-wrap: wrap; gap: var(--s-2); font-size: .85rem; color: var(--mute); }
+.legend span { display: inline-flex; align-items: center; gap: .4rem; }
+.legend span::before { content: ""; width: .8rem; height: .8rem; border-radius: 1px; background: var(--sw); box-shadow: var(--sh, none); }
+.callout { font: 800 clamp(1.6rem, 3.4vw, 2.3rem)/1.05 var(--f-display); font-stretch: 75%; margin-bottom: var(--s-2); }
+.callout b { color: var(--rec); }
+.prose { display: grid; gap: var(--s-1); }
+.tbl-wrap { overflow-x: auto; margin-top: var(--s-2); }
+table { border-collapse: collapse; width: 100%; font-size: .95rem; min-width: 380px; }
+th, td { text-align: left; padding: .6rem .5rem; border-bottom: 1px solid var(--line); }
+th { font: 600 .68rem/1 var(--f-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--mute); }
+td.n { font-family: var(--f-mono); font-variant-numeric: tabular-nums; text-align: right; }
+th.n { text-align: right; }
+tr.win td { font-weight: 600; }
+tr.win td:first-child::after { content: " ← escolhido"; font: .7rem var(--f-mono); color: var(--rec); }
+
+/* ---------- limites ---------- */
+.limits { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-3) var(--s-4); }
+.limits h3 { font-size: 1.35rem; font-weight: 800; font-stretch: 80%; margin-bottom: .5rem; }
+.limits p { font-size: 1rem; }
+.flag { border-left: 3px solid var(--rec); padding-left: var(--s-2); }
+
+footer { margin-top: var(--s-5); padding-block: var(--s-3); border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--s-2); font-size: .9rem; color: var(--mute); }
+
+@media (max-width: 880px) {
+  .sim, .score, .formula { grid-template-columns: minmax(0, 1fr); }
+  .monitor { position: static; order: -1; }
+  .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .step:nth-child(3) { padding-left: 0; border-left: 0; }
+  .step:nth-child(n+3) { border-top: 1px solid var(--line); }
+  .lever { grid-template-columns: minmax(0, 1fr) 4rem; }
+  .lever .track { grid-column: 1 / -1; grid-row: 2; }
+}
+@media (max-width: 520px) {
+  .steps, .limits, .toggles { grid-template-columns: minmax(0, 1fr); }
+  .step, .step + .step { padding-left: 0; border-left: 0; }
+  .step + .step { border-top: 1px solid var(--line); }
+  .why-row { grid-template-columns: minmax(0, 6rem) minmax(0, 1fr) 2.6rem; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="label rec">Projeto de Computer Science · Machine Learning</span>
+    <span class="label">Daniel Pugliezi</span>
+  </header>
+
+  <section class="hero">
+    <h1>Vai<br><em>viralizar?</em></h1>
+    <p class="lede">Ensinei um computador a olhar para um vídeo curto e estimar a chance de ele estourar. Ele aprendeu sozinho, a partir de 3.000 exemplos. Monte um vídeo abaixo e veja o que ele acha.</p>
+  </section>
+
+  <!-- SIMULADOR -->
+  <div class="cut" id="simulador"><span class="tc">00:00:01</span><span class="track"></span><span class="name">Simulador</span></div>
+  <h2 class="sec-title">Monte o seu vídeo</h2>
+  <p class="sec-intro">Mexa nos controles. O número à direita é a resposta do modelo, calculada na hora com a mesma fórmula que ele aprendeu no Python.</p>
+
+  <form class="sim" id="form" autocomplete="off">
+    <div class="controls">
+      <fieldset>
+        <legend>Gancho <small>os primeiros segundos</small></legend>
+        <div class="ctl">
+          <div class="ctl-head"><label for="hook_segundos">Quanto tempo até o gancho aparecer</label><output id="o_hook" for="hook_segundos"></output></div>
+          <input type="range" id="hook_segundos" name="hook_segundos" min="0.3" max="8" step="0.1" value="1.5">
+        </div>
+        <div class="ctl">
+          <div class="ctl-head"><span>Tipo de gancho</span></div>
+          <div class="chips" data-group="tipo_hook"></div>
+        </div>
+        <div class="toggles">
+          <div class="toggle"><input type="checkbox" id="rosto_1s" name="rosto_1s"><label for="rosto_1s">Rosto no 1º segundo</label></div>
+          <div class="toggle"><input type="checkbox" id="texto_na_tela" name="texto_na_tela"><label for="texto_na_tela">Texto na tela</label></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Estrutura <small>como o vídeo é montado</small></legend>
+        <div class="ctl">
+          <div class="ctl-head"><label for="duracao_seg">Duração</label><output id="o_dur" for="duracao_seg"></output></div>
+          <input type="range" id="duracao_seg" name="duracao_seg" min="7" max="90" step="1" value="30">
+        </div>
+        <div class="ctl">
+          <div class="ctl-head"><label for="cortes_por_10s">Ritmo de edição</label><output id="o_cortes" for="cortes_por_10s"></output></div>
+          <input type="range" id="cortes_por_10s" name="cortes_por_10s" min="0.5" max="8" step="0.1" value="3">
+        </div>
+        <div class="ctl">
+          <div class="ctl-head"><span>Formato</span></div>
+          <div class="chips" data-group="estrutura"></div>
+        </div>
+        <div class="toggles">
+          <div class="toggle"><input type="checkbox" id="tem_loop" name="tem_loop"><label for="tem_loop">Final emenda no começo (loop)</label></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Conteúdo <small>sobre o que é e quando sai</small></legend>
+        <div class="ctl">
+          <div class="ctl-head"><span>Tema</span></div>
+          <div class="chips" data-group="tema"></div>
+        </div>
+        <div class="ctl">
+          <div class="ctl-head"><label for="hora_postagem">Hora da postagem</label><output id="o_hora" for="hora_postagem"></output></div>
+          <input type="range" id="hora_postagem" name="hora_postagem" min="0" max="23" step="1" value="13">
+        </div>
+        <div class="toggles">
+          <div class="toggle"><input type="checkbox" id="audio_em_alta" name="audio_em_alta"><label for="audio_em_alta">Áudio que está em alta</label></div>
+        </div>
+      </fieldset>
+    </div>
+
+    <aside class="monitor" aria-live="polite">
+      <div class="mon-top"><span class="label rec">Previsão</span><span class="label" id="baseline"></span></div>
+      <div>
+        <div class="pct" id="pct">—<sup>%</sup></div>
+        <div class="verdict" id="verdict"></div>
+      </div>
+      <div>
+        <div class="meter"><i id="meter"></i><b id="meter-avg"></b></div>
+        <div class="meter-cap"><span>0%</span><span>linha branca = vídeo médio</span><span>100%</span></div>
+      </div>
+      <div class="why">
+        <span class="label">O que puxou para cima e para baixo</span>
+        <div id="why"></div>
+      </div>
+      <div class="presets">
+        <button type="button" data-preset="forte">Exemplo: gancho forte</button>
+        <button type="button" data-preset="fraco">Exemplo: sem gancho</button>
+        <button type="button" data-preset="medio">Vídeo médio</button>
+      </div>
+      <p class="fine">Barras vermelhas aumentam a chance, azuis diminuem, sempre comparando com um vídeo médio dos dados.</p>
+    </aside>
+  </form>
+
+  <!-- COMO APRENDEU -->
+  <div class="cut"><span class="tc">00:00:02</span><span class="track"></span><span class="name">Como ele aprendeu</span></div>
+  <h2 class="sec-title">Exemplos em vez de regras</h2>
+  <p class="sec-intro">Em um programa comum, alguém escreve as regras. Aqui foi o contrário: o computador recebeu milhares de vídeos com a resposta certa e descobriu as regras sozinho. Foram quatro etapas.</p>
+
+  <div class="steps">
+    <div class="step"><span class="tc">ETAPA 1</span><h3>Dados</h3><span class="big" data-k="total"></span><p>vídeos descritos por 11 características: o gancho, a duração, o ritmo, o tema e outras. Cada um marcado como viral ou não.</p></div>
+    <div class="step"><span class="tc">ETAPA 2</span><h3>Treino</h3><span class="big" data-k="treino"></span><p>vídeos usados para estudar. O modelo testa pesos para cada característica até errar o mínimo possível.</p></div>
+    <div class="step"><span class="tc">ETAPA 3</span><h3>Prova</h3><span class="big" data-k="teste"></span><p>vídeos guardados numa gaveta. O modelo nunca os viu. Servem para medir se ele aprendeu ou só decorou.</p></div>
+    <div class="step"><span class="tc">ETAPA 4</span><h3>Previsão</h3><span class="big">1</span><p>vídeo novo de cada vez. É o que o simulador acima faz: aplica os pesos aprendidos e dá uma porcentagem.</p></div>
+  </div>
+
+  <div class="formula">
+    <div class="prose">
+      <span class="label">A fórmula por dentro</span>
+      <p>O modelo escolhido se chama <strong>Regressão Logística</strong>. Ele funciona como uma balança: cada característica tem um peso, positivo ou negativo. Somam-se os pesos e o total passa por uma curva que transforma qualquer número em uma porcentagem entre 0 e 100.</p>
+    </div>
+    <code>pontos = <span>b</span> + <span>w₁</span>·gancho + <span>w₂</span>·duração + …<br>chance = 1 ÷ (1 + e<sup>−pontos</sup>)</code>
+  </div>
+
+  <!-- ALAVANCAS -->
+  <div class="cut"><span class="tc">00:00:03</span><span class="track"></span><span class="name">O que mais pesa</span></div>
+  <h2 class="sec-title">As alavancas</h2>
+  <p class="sec-intro">Partindo de um vídeo médio, quantos pontos percentuais de chance cada troca acrescenta, segundo o que o modelo aprendeu.</p>
+  <div class="levers" id="levers"></div>
+
+  <!-- ACERTOS -->
+  <div class="cut"><span class="tc">00:00:04</span><span class="track"></span><span class="name">Quanto ele acerta</span></div>
+  <h2 class="sec-title">A prova final</h2>
+  <div class="score">
+    <div>
+      <p class="callout" id="auc-callout"></p>
+      <p>Esse número se chama <strong>AUC</strong>. Pegue um vídeo que viralizou e um que não viralizou, ao acaso. Em quantas vezes o modelo dá nota maior para o certo? Chutar daria 50%. Perfeito seria 100%.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Modelo testado</th><th class="n">AUC</th><th class="n">Acurácia</th></tr></thead>
+          <tbody id="cmp"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="prose">
+      <span class="label">Os vídeos virais da prova</span>
+      <div class="grid100" id="grid" aria-hidden="true"></div>
+      <div class="legend">
+        <span style="--sw: var(--rec)">encontrados pelo modelo</span>
+        <span style="--sw: transparent; --sh: inset 0 0 0 1.5px var(--rec)">deixados passar</span>
+      </div>
+      <p id="grid-text"></p>
+      <p>Ele deixa passar muitos porque só aposta “viral” quando passa de 50% de certeza. Baixar esse corte encontra mais virais, ao custo de mais alarmes falsos. Essa troca está explicada no notebook.</p>
+    </div>
+  </div>
+
+  <!-- LIMITES -->
+  <div class="cut"><span class="tc">00:00:05</span><span class="track"></span><span class="name">Limites</span></div>
+  <h2 class="sec-title">O que ele não sabe</h2>
+  <div class="limits">
+    <div class="flag"><h3>Os vídeos são simulados</h3><p>As plataformas não informam coisas como “segundos até o gancho”. Por isso os 3.000 vídeos foram gerados por código, com regras inspiradas no que criadores observam e um fator de sorte. O modelo não sabia dessas regras e conseguiu redescobri-las. Para valer no mundo real, seria preciso anotar vídeos de verdade.</p></div>
+    <div><h3>Correlação não é causa</h3><p>Mesmo com dados reais, “vídeos com loop viralizam mais” não prova que colocar um loop faz viralizar. Talvez quem usa loop também capriche em todo o resto.</p></div>
+    <div><h3>Falta muita coisa</h3><p>Tamanho do perfil, o algoritmo da plataforma, a ideia em si. Nada disso está nos dados, e é por isso que mesmo o melhor modelo erra bastante.</p></div>
+    <div><h3>Sorte existe</h3><p>Dois vídeos iguais podem ter destinos diferentes. O modelo dá uma chance, não uma garantia.</p></div>
+  </div>
+
+  <footer>
+    <span>Feito em Python com pandas e scikit-learn. Código e explicação completos no notebook <span class="mono">previsor_viral.ipynb</span>.</span>
+    <span class="mono">2026</span>
+  </footer>
+</div>
+
+<script src="model.js"></script>
+<script>
+(function () {
+  var M = window.MODELO;
+  if (!M) { document.getElementById("pct").textContent = "?"; return; }
+  var form = document.getElementById("form");
+  var sig = function (z) { return 1 / (1 + Math.exp(-z)); };
+  var pct = function (p) { return Math.round(p * 100); };
+  var fmt = function (x, d) { return x.toLocaleString("pt-BR", { minimumFractionDigits: d, maximumFractionDigits: d }); };
+
+  var NOMES = {
+    tipo_hook: { pergunta: "pergunta", choque: "choque", promessa: "promessa", historia: "história", nenhum: "nenhum" },
+    estrutura: { lista: "lista", tutorial: "tutorial", antes_depois: "antes/depois", storytime: "storytime", vlog: "vlog" },
+    tema: { humor: "humor", educacao: "educação", beleza: "beleza", games: "games", culinaria: "culinária", esporte: "esporte" }
+  };
+  var ROTULO = {
+    hook_segundos: "Tempo até o gancho", excesso_duracao: "Duração", ritmo_fora_do_ideal: "Ritmo",
+    rosto_1s: "Rosto no início", texto_na_tela: "Texto na tela", tem_loop: "Loop", audio_em_alta: "Áudio em alta",
+    horario_nobre: "Horário", tipo_hook: "Tipo de gancho", estrutura: "Formato", tema: "Tema"
+  };
+
+  // monta os chips a partir das categorias que o modelo conhece
+  document.querySelectorAll(".chips").forEach(function (box) {
+    var g = box.dataset.group;
+    Object.keys(NOMES[g]).forEach(function (c) {
+      var id = g + "_" + c;
+      box.insertAdjacentHTML("beforeend",
+        '<input type="radio" name="' + g + '" id="' + id + '" value="' + c + '"><label for="' + id + '">' + NOMES[g][c] + "</label>");
+    });
+  });
+
+  // ponto de partida: o "vídeo médio" (todas as características na média do treino)
+  var z0 = M.intercepto;
+  Object.keys(M.binarias).forEach(function (f) { z0 += M.binarias[f].peso * M.binarias[f].media; });
+  Object.keys(M.categoricas).forEach(function (f) {
+    var cs = M.categoricas[f]; Object.keys(cs).forEach(function (c) { z0 += cs[c].peso * cs[c].media; });
+  });
+  var catMedia = function (f) { var cs = M.categoricas[f], s = 0; Object.keys(cs).forEach(function (c) { s += cs[c].peso * cs[c].media; }); return s; };
+
+  // mesma engenharia de features do notebook (seção 4)
+  function features(v) {
+    return {
+      hook_segundos: v.hook_segundos,
+      excesso_duracao: Math.max(v.duracao_seg - 30, 0),
+      ritmo_fora_do_ideal: Math.abs(v.cortes_por_10s - 4),
+      rosto_1s: v.rosto_1s, texto_na_tela: v.texto_na_tela, tem_loop: v.tem_loop, audio_em_alta: v.audio_em_alta,
+      horario_nobre: (v.hora_postagem >= 18 && v.hora_postagem <= 22) ? 1 : 0,
+      tipo_hook: v.tipo_hook, estrutura: v.estrutura, tema: v.tema
+    };
+  }
+  // contribuição de cada característica, em "pontos", comparada ao vídeo médio
+  function contribuicoes(v) {
+    var x = features(v), out = {};
+    Object.keys(M.numericas).forEach(function (f) { var p = M.numericas[f]; out[f] = p.peso * (x[f] - p.media) / p.desvio; });
+    Object.keys(M.binarias).forEach(function (f) { var p = M.binarias[f]; out[f] = p.peso * (x[f] - p.media); });
+    Object.keys(M.categoricas).forEach(function (f) { out[f] = M.categoricas[f][x[f]].peso - catMedia(f); });
+    return out;
+  }
+  function prever(v) {
+    var c = contribuicoes(v), z = z0;
+    Object.keys(c).forEach(function (k) { z += c[k]; });
+    return { p: sig(z), c: c };
+  }
+
+  function ler() {
+    var fd = new FormData(form);
+    var num = function (k) { return parseFloat(fd.get(k)); };
+    var on = function (k) { return fd.get(k) ? 1 : 0; };
+    return {
+      hook_segundos: num("hook_segundos"), duracao_seg: num("duracao_seg"), cortes_por_10s: num("cortes_por_10s"),
+      hora_postagem: num("hora_postagem"), tipo_hook: fd.get("tipo_hook"), estrutura: fd.get("estrutura"), tema: fd.get("tema"),
+      rosto_1s: on("rosto_1s"), texto_na_tela: on("texto_na_tela"), tem_loop: on("tem_loop"), audio_em_alta: on("audio_em_alta")
+    };
+  }
+  function aplicar(v) {
+    Object.keys(v).forEach(function (k) {
+      var el = form.elements[k];
+      if (!el) return;
+      if (el.type === "checkbox") el.checked = !!v[k];
+      else if (el.length && el[0] && el[0].type === "radio") { var r = form.querySelector('input[name="' + k + '"][value="' + v[k] + '"]'); if (r) r.checked = true; }
+      else el.value = v[k];
+    });
+    render();
+  }
+
+  var p0 = sig(z0);
+  document.getElementById("baseline").textContent = "médio: " + pct(p0) + "%";
+  document.getElementById("meter-avg").style.left = (p0 * 100) + "%";
+
+  function render() {
+    var v = ler(), r = prever(v), P = r.p;
+    document.getElementById("o_hook").textContent = fmt(v.hook_segundos, 1) + " s";
+    document.getElementById("o_dur").textContent = v.duracao_seg + " s";
+    document.getElementById("o_cortes").textContent = fmt(v.cortes_por_10s, 1) + " cortes / 10 s";
+    document.getElementById("o_hora").textContent = String(v.hora_postagem).padStart(2, "0") + "h";
+    document.getElementById("pct").innerHTML = pct(P) + "<sup>%</sup>";
+    document.getElementById("meter").style.width = (P * 100) + "%";
+    document.getElementById("verdict").textContent =
+      P >= .6 ? "Forte candidato a viralizar" : P >= .4 ? "Tem chance real" : P >= p0 ? "Um pouco acima da média" : P >= .1 ? "Abaixo da média" : "Dificilmente vai viralizar";
+
+    var keys = Object.keys(r.c).sort(function (a, b) { return Math.abs(r.c[b]) - Math.abs(r.c[a]); });
+    var max = 1.6, html = "";
+    keys.slice(0, 7).forEach(function (k) {
+      var c = r.c[k], w = Math.min(Math.abs(c) / max, 1) * 50;
+      var bar = c >= 0
+        ? '<i style="left:50%;width:' + w + '%;background:var(--rec)"></i>'
+        : '<i style="left:' + (50 - w) + '%;width:' + w + '%;background:var(--cold)"></i>';
+      html += '<div class="why-row"><span>' + ROTULO[k] + '</span><span class="bar">' + bar + '</span><span class="v">' + (c >= 0 ? "+" : "−") + fmt(Math.abs(c), 1) + "</span></div>";
+    });
+    document.getElementById("why").innerHTML = html;
+  }
+
+  var PRESETS = {
+    forte: { hook_segundos: 0.8, tipo_hook: "choque", rosto_1s: 1, texto_na_tela: 1, duracao_seg: 22, cortes_por_10s: 4.2, estrutura: "antes_depois", tem_loop: 1, tema: "humor", audio_em_alta: 1, hora_postagem: 19 },
+    fraco: { hook_segundos: 6, tipo_hook: "nenhum", rosto_1s: 0, texto_na_tela: 0, duracao_seg: 75, cortes_por_10s: 0.8, estrutura: "vlog", tem_loop: 0, tema: "esporte", audio_em_alta: 0, hora_postagem: 9 },
+    medio: { hook_segundos: 2.4, tipo_hook: "pergunta", rosto_1s: 1, texto_na_tela: 1, duracao_seg: 45, cortes_por_10s: 4.2, estrutura: "tutorial", tem_loop: 0, tema: "educacao", audio_em_alta: 0, hora_postagem: 13 }
+  };
+  document.querySelectorAll("[data-preset]").forEach(function (b) {
+    b.addEventListener("click", function () { aplicar(PRESETS[b.dataset.preset]); });
+  });
+  form.addEventListener("input", render);
+  form.addEventListener("submit", function (e) { e.preventDefault(); });
+  aplicar({ hook_segundos: 1.5, tipo_hook: "pergunta", rosto_1s: 1, texto_na_tela: 1, duracao_seg: 28, cortes_por_10s: 3, estrutura: "lista", tem_loop: 0, tema: "culinaria", audio_em_alta: 0, hora_postagem: 13 });
+
+  // ---------- alavancas: diferença de chance em pontos percentuais ----------
+  var pz = function (dz) { return sig(z0 + dz); };
+  var num = function (f, a, b) { var p = M.numericas[f]; return [p.peso * (a - p.media) / p.desvio, p.peso * (b - p.media) / p.desvio]; };
+  var bin = function (f) { var p = M.binarias[f]; return [p.peso * (1 - p.media), p.peso * (0 - p.media)]; };
+  var cat = function (f, a, b) { var m = catMedia(f); return [M.categoricas[f][a].peso - m, M.categoricas[f][b].peso - m]; };
+  var LEV = [
+    ["Gancho em 1 s em vez de 5 s", "tempo até o gancho", num("hook_segundos", 1, 5)],
+    ["Vídeo de 25 s em vez de 75 s", "duração", num("excesso_duracao", 0, 45)],
+    ["Gancho de choque em vez de nenhum", "tipo de gancho", cat("tipo_hook", "choque", "nenhum")],
+    ["Antes/depois em vez de vlog", "formato", cat("estrutura", "antes_depois", "vlog")],
+    ["Ritmo de 4 cortes em vez de 1 a cada 10 s", "ritmo de edição", num("ritmo_fora_do_ideal", 0, 3)],
+    ["Final em loop", "estrutura", bin("tem_loop")],
+    ["Texto na tela", "gancho", bin("texto_na_tela")],
+    ["Áudio em alta", "conteúdo", bin("audio_em_alta")],
+    ["Rosto no primeiro segundo", "gancho", bin("rosto_1s")],
+    ["Humor em vez de esporte", "tema", cat("tema", "humor", "esporte")],
+    ["Postar entre 18h e 22h", "horário", bin("horario_nobre")]
+  ].map(function (l) { return { t: l[0], s: l[1], d: pz(l[2][0]) - pz(l[2][1]) }; })
+   .sort(function (a, b) { return b.d - a.d; });
+  var top = LEV[0].d;
+  document.getElementById("levers").innerHTML = LEV.map(function (l) {
+    return '<div class="lever"><span class="what">' + l.t + "<small>" + l.s + '</small></span><span class="track"><i style="width:' + (l.d / top * 100) + '%"></i></span><span class="num">+' + Math.round(l.d * 100) + " pp</span></div>";
+  }).join("");
+
+  // ---------- etapas e prova ----------
+  document.querySelectorAll("[data-k]").forEach(function (el) { el.textContent = M.dados[el.dataset.k].toLocaleString("pt-BR"); });
+  var auc = M.metricas.AUC;
+  document.getElementById("auc-callout").innerHTML = "Em <b>" + pct(auc) + " de cada 100</b> comparações, o modelo coloca o vídeo viral na frente.";
+  var cmpNomes = { "Dummy (sempre 'não')": "Chute fixo (sempre “não”)" };
+  document.getElementById("cmp").innerHTML = Object.keys(M.comparacao).map(function (n) {
+    var r = M.comparacao[n];
+    return '<tr class="' + (n === "Regressão Logística" ? "win" : "") + '"><td>' + (cmpNomes[n] || n) + '</td><td class="n">' + fmt(r.AUC, 2) + '</td><td class="n">' + pct(r["Acurácia"]) + "%</td></tr>";
+  }).join("");
+
+  var tp = M.matriz[1][1], fn = M.matriz[1][0], tot = tp + fn, cells = "";
+  for (var i = 0; i < tot; i++) cells += '<i class="' + (i < tp ? "hit" : "miss") + '"></i>';
+  document.getElementById("grid").innerHTML = cells;
+  document.getElementById("grid-text").textContent = "Na prova havia " + tot + " vídeos virais. O modelo apontou " + tp + " deles corretamente, cada quadrado é um vídeo. Quando ele diz “viral”, acerta " + pct(M.metricas["Precisão"]) + "% das vezes.";
+})();
+</script>
+</html>
