@@ -3,3 +3,4 @@ pandas
 scikit-learn
 matplotlib
 jupyterlab
+anthropic  # opcional: só para extrair features com LLM

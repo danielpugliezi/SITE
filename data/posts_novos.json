@@ -1,0 +1,30 @@
+[
+ {
+  "id": "novo_01", "plataforma": "tiktok",
+  "legenda": "Antes e depois: o meu quarto em 1 dia #humor #comedia",
+  "transcricao": "[00:00.6] PARA TUDO! Olha como estava esse quarto\n[00:04.0] Pois é.\n[00:09.5] Valeu por assistir.",
+  "notas_visuais": "abre com close no rosto; texto grande na tela no início; o final emenda no começo; usa um áudio em alta; edição com 9 cortes",
+  "duracao_seg": 21, "postado_em": "2026-11-06T19:30"
+ },
+ {
+  "id": "novo_02", "plataforma": "shorts",
+  "legenda": "Vlog: meu domingo inteiro #futebol #esporte",
+  "transcricao": "[00:00.0] Oi gente.\n[00:03.1] E aí eu fui fazer.\n[00:08.0] Ficou assim.",
+  "notas_visuais": "começa mostrando o cenário; sem texto na tela; áudio original; edição com 6 cortes",
+  "duracao_seg": 80, "postado_em": "2026-11-08T09:10"
+ },
+ {
+  "id": "novo_03", "plataforma": "reels",
+  "legenda": "Passo a passo de pão de queijo de frigideira #receita #culinaria",
+  "transcricao": "[00:00.0] Bom, vamos lá.\n[00:01.4] Vou te mostrar o pão de queijo mais rápido do mundo\n[00:05.0] Ficou assim.",
+  "notas_visuais": "rosto aparece logo no primeiro segundo; legenda escrita em cima do vídeo; áudio original; edição com 14 cortes",
+  "duracao_seg": 35, "postado_em": "2026-11-07T12:00"
+ },
+ {
+  "id": "novo_04", "plataforma": "tiktok",
+  "legenda": "3 coisas sobre buracos negros #educacao #aprenda",
+  "transcricao": "[00:00.0] Então.\n[00:01.5] Hoje o vídeo é rapidinho.\n[00:03.2] Você sabia que buracos negros evaporam?\n[00:08.0] Comenta aí embaixo.",
+  "notas_visuais": "primeiros segundos sem ninguém na tela; texto grande na tela no início; som viral do momento; edição com 12 cortes",
+  "duracao_seg": 30, "postado_em": "2026-11-09T20:15"
+ }
+]
