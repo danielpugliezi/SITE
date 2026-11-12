@@ -1,26 +1,24 @@
 # Will It Go Viral?
 
-Machine Learning project by **Gustavo Pugliezi** (Computer Science): a Logistic Regression model that estimates whether a short video will go viral from its **hook**, **structure** and **content**.
+Machine Learning project by **Gustavo Pugliezi** (Computer Science): a Logistic Regression model, trained on **real YouTube Shorts**, that estimates whether a short video will go viral from its **hook**, **structure** and **content**.
 
-## Deliverable
-`notebook/viral_predictor.ipynb` follows the 12-step project framework and is self-contained. Open it in Jupyter Lab, VS Code or Google Colab and choose **Run All**. It needs no other files and writes everything it produces into its own folder:
+## How to run
+Both notebooks live in `notebook/` and must stay in the same folder.
 
-| File | Created in | What it is |
+1. **`collect_real_videos.ipynb`**: run it on your own computer (YouTube blocks most cloud servers). It searches YouTube Shorts in 6 topics, saves public data and automatic captions, analyses each video's frames (face in the first second, cuts, loop) and writes `posts.json` and `new_posts.json`. It takes about 30–60 minutes and resumes where it stopped.
+2. **`viral_predictor.ipynb`**: the deliverable. It follows the 12-step project framework, each step explained with the "intern" analogy, and produces:
+
+| File | Step | What it is |
 |---|---|---|
-| `posts.json` | Step 3 | the 3,000 (simulated) posts received as JSON |
-| `post_extractor.py` | Step 4 | feature extraction: LLM or classroom simulation |
-| `dataset.csv` | Step 5 | the dataset |
-| `new_posts.json` | Step 10 | brand-new posts with no answer |
-| `viral_model.pkl` | Step 11 | the trained model |
-| `predict_app.py` | Step 12 | a separate app that loads the `.pkl` and predicts |
+| `post_extractor.py` | 4 | feature extraction (classroom rules or LLM) |
+| `dataset.csv` | 5 | the dataset |
+| `viral_model.pkl` | 11 | the trained model |
+| `predict_app.py` | 12 | a separate app that loads the `.pkl` and predicts |
 
 ```bash
 pip install -r requirements.txt
-jupyter lab notebook/viral_predictor.ipynb
-
-cd notebook
-python predict_app.py new_posts.json
+jupyter lab notebook/
 ```
 
 ## Presentation site
-`site/index.html` is an interactive page (in Portuguese) for the presentation. Open it directly in a browser.
+`site/index.html` is an interactive page (in Portuguese) for the presentation. It still uses the earlier simulated-data model.
