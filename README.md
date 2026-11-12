@@ -1,25 +1,26 @@
-# Vai Viralizar?
+# Will It Go Viral?
 
-Projeto de Machine Learning (Computer Science) de **Gustavo Pugliezi**: um modelo de Regressão Logística que estima a chance de um vídeo curto viralizar a partir do **gancho**, da **estrutura** e do **conteúdo**.
+Machine Learning project by **Gustavo Pugliezi** (Computer Science): a Logistic Regression model that estimates whether a short video will go viral from its **hook**, **structure** and **content**.
 
-| Arquivo | O que tem |
-|---|---|
-| `notebook/previsor_viral.ipynb` | o projeto completo, nos 12 passos do framework |
-| `data/posts.json` | 3.000 posts (simulados) recebidos em JSON |
-| `data/gerar_posts.py` | script que gerou os posts |
-| `data/posts_novos.json` | 4 posts novos, sem resposta, para testar o modelo |
-| `data/dataset.csv` | dataset montado no passo 5 |
-| `app/viralidade.py` | especificação das features, extração (LLM ou simulada) e engenharia de features |
-| `app/prever.py` | aplicação que abre o `.pkl` e prevê posts novos |
-| `modelo/previsor_viral.pkl` | modelo treinado |
-| `site/index.html` | site interativo da apresentação (abre direto no navegador) |
+## Deliverable
+`notebook/viral_predictor.ipynb` follows the 12-step project framework and is self-contained. Open it in Jupyter Lab, VS Code or Google Colab and choose **Run All**. It needs no other files and writes everything it produces into its own folder:
 
-## Como rodar
+| File | Created in | What it is |
+|---|---|---|
+| `posts.json` | Step 3 | the 3,000 (simulated) posts received as JSON |
+| `post_extractor.py` | Step 4 | feature extraction: LLM or classroom simulation |
+| `dataset.csv` | Step 5 | the dataset |
+| `new_posts.json` | Step 10 | brand-new posts with no answer |
+| `viral_model.pkl` | Step 11 | the trained model |
+| `predict_app.py` | Step 12 | a separate app that loads the `.pkl` and predicts |
 
 ```bash
 pip install -r requirements.txt
-jupyter lab notebook/previsor_viral.ipynb      # Run → Run All Cells
+jupyter lab notebook/viral_predictor.ipynb
 
-cd app
-python prever.py ../data/posts_novos.json      # usa o modelo .pkl fora do notebook
+cd notebook
+python predict_app.py new_posts.json
 ```
+
+## Presentation site
+`site/index.html` is an interactive page (in Portuguese) for the presentation. Open it directly in a browser.
