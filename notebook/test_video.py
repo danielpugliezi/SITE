@@ -85,13 +85,15 @@ def fetch_post(url, topic, cookies=None):
         "quiet": True, "no_warnings": True, "noprogress": True,
         "format": "bv*[height<=480][ext=mp4]/bv*[height<=480]/b[height<=480]/wv*/w",
         "outtmpl": os.path.join(work, "%(id)s.%(ext)s"),
-        "writeautomaticsub": True, "subtitleslangs": ["pt-orig", "pt", "en-orig", "en"], "subtitlesformat": "json3",
+        "writeautomaticsub": True, "subtitleslangs": ["pt-orig", "en-orig"], "ignoreerrors": "only_download", "subtitlesformat": "json3",
     }
     if cookies:
         options["cookiesfrombrowser"] = (cookies,)
     with yt_dlp.YoutubeDL(options) as y:
         info = y.extract_info(url, download=True)
-    video = next(os.path.join(work, f) for f in os.listdir(work) if f.endswith((".mp4", ".webm", ".mkv")))
+    video = next((os.path.join(work, f) for f in os.listdir(work) if f.endswith((".mp4", ".webm", ".mkv"))), None)
+    if info is None or video is None:
+        raise ValueError("YouTube did not send the video file (try again in a few minutes, or use --cookies chrome)")
     post = {
         "id": info["id"], "title": info.get("title") or "", "description": (info.get("description") or "")[:500],
         "transcript": read_transcript(info), "duration_s": info.get("duration"),
@@ -120,7 +122,7 @@ if __name__ == "__main__":
     print("Downloading and analysing the video...")
     try:
         post = fetch_post(url, topic, cookies)
-    except yt_dlp.utils.DownloadError as error:
+    except (yt_dlp.utils.DownloadError, ValueError) as error:
         hint = "\nTip: add --cookies chrome (or edge/firefox) to use your browser's YouTube login." if "bot" in str(error) else ""
         sys.exit(f"Could not download the video: {error}{hint}")
     features = px.extract(post)
