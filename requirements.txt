@@ -3,6 +3,4 @@ pandas
 scikit-learn
 matplotlib
 jupyterlab
-yt-dlp
-opencv-python-headless<5
 anthropic  # optional: only for LLM feature extraction
