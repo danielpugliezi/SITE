@@ -118,7 +118,11 @@ if __name__ == "__main__":
         bundle = pickle.load(f)
 
     print("Downloading and analysing the video...")
-    post = fetch_post(url, topic, cookies)
+    try:
+        post = fetch_post(url, topic, cookies)
+    except yt_dlp.utils.DownloadError as error:
+        hint = "\nTip: add --cookies chrome (or edge/firefox) to use your browser's YouTube login." if "bot" in str(error) else ""
+        sys.exit(f"Could not download the video: {error}{hint}")
     features = px.extract(post)
     chance = bundle["pipeline"].predict_proba(pd.DataFrame([features])[bundle["features"]])[0, 1]
 
